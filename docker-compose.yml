@@ -1,0 +1,63 @@
+services:
+  # PostgreSQL database for Ory Kratos
+  kratos-db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kratos
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: kratos
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - kratos-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kratos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Run database migrations
+  kratos-migrate:
+    image: oryd/kratos:latest
+    depends_on:
+      kratos-db:
+        condition: service_healthy
+    environment:
+      DSN: postgres://kratos:secret@kratos-db:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    volumes:
+      - ./kratos:/etc/config/kratos
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: on-failure
+
+  # Ory Kratos Public API
+  kratos:
+    image: oryd/kratos:latest
+    depends_on:
+      kratos-migrate:
+        condition: service_completed_successfully
+    environment:
+      DSN: postgres://kratos:secret@kratos-db:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    ports:
+      - "4433:4433"  # Public API (for browser flows)
+      - "4434:4434"  # Admin API
+    volumes:
+      - ./kratos:/etc/config/kratos
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+    command: serve --config /etc/config/kratos/kratos.yml --dev --watch-courier
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4433/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  kratos-db-data:
+  kratos-sqlite:
