@@ -20,25 +20,31 @@ try {
     exit 1
 }
 
-# Start Docker Compose
-Write-Host "Starting Ory Kratos with Docker Compose..." -ForegroundColor Cyan
+# Start Docker Compose (Kratos + Keto)
+Write-Host "Starting Ory Kratos and Keto with Docker Compose..." -ForegroundColor Cyan
 docker-compose up -d
 
 Write-Host "Waiting for services to be ready..." -ForegroundColor Yellow
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 15
 
 # Check if services are running
 $services = docker-compose ps
 if ($services -match "kratos.*Up") {
     Write-Host "Ory Kratos is running!" -ForegroundColor Green
+    if ($services -match "keto.*Up") {
+        Write-Host "Ory Keto is running!" -ForegroundColor Green
+    }
     Write-Host ""
     Write-Host "Services:" -ForegroundColor Cyan
-    Write-Host "   - Public API: http://localhost:4433"
-    Write-Host "   - Admin API: http://localhost:4434"
-    Write-Host "   - Database: localhost:5432"
+    Write-Host "   Kratos - Public API: http://localhost:4433, Admin: http://localhost:4434"
+    Write-Host "   Keto   - Read API:   http://localhost:4466, Write: http://localhost:4467"
+    Write-Host "   DBs   - Kratos: localhost:5432, Keto: localhost:5433"
     Write-Host ""
-    Write-Host "Test the setup:" -ForegroundColor Cyan
+    Write-Host "Test:" -ForegroundColor Cyan
     Write-Host "   curl http://localhost:4433/health/ready"
+    Write-Host "   curl http://localhost:4466/health/ready"
+    Write-Host ""
+    Write-Host "Backend: set KETO_READ_URL=http://localhost:4466 and KETO_WRITE_URL=http://localhost:4467"
     Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Cyan
     Write-Host "   1. Make sure VITE_ORY_URL=http://localhost:4433 is in your .env file"

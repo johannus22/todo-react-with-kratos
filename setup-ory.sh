@@ -20,24 +20,28 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Start Docker Compose
-echo "🐳 Starting Ory Kratos with Docker Compose..."
+# Start Docker Compose (Kratos + Keto)
+echo "🐳 Starting Ory Kratos and Keto with Docker Compose..."
 docker-compose up -d
 
 echo "⏳ Waiting for services to be ready..."
-sleep 5
+sleep 15
 
 # Check if services are running
 if docker-compose ps | grep -q "kratos.*Up"; then
     echo "✅ Ory Kratos is running!"
+    docker-compose ps | grep -q "keto.*Up" && echo "✅ Ory Keto is running!"
     echo ""
     echo "📍 Services:"
-    echo "   - Public API: http://localhost:4433"
-    echo "   - Admin API: http://localhost:4434"
-    echo "   - Database: localhost:5432"
+    echo "   Kratos - Public API: http://localhost:4433, Admin: http://localhost:4434"
+    echo "   Keto   - Read API:   http://localhost:4466, Write: http://localhost:4467"
+    echo "   DBs    - Kratos: localhost:5432, Keto: localhost:5433"
     echo ""
-    echo "🧪 Test the setup:"
+    echo "🧪 Test:"
     echo "   curl http://localhost:4433/health/ready"
+    echo "   curl http://localhost:4466/health/ready"
+    echo ""
+    echo "🔧 Backend: set KETO_READ_URL=http://localhost:4466 and KETO_WRITE_URL=http://localhost:4467"
     echo ""
     echo "📚 Next steps:"
     echo "   1. Make sure VITE_ORY_URL=http://localhost:4433 is in your .env file"

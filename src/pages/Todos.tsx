@@ -6,8 +6,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { Button } from "pixel-retroui";
 
 export function Todos() {
-  const { todos, loading, error, addTodo, updateTodo, deleteTodo } = useTodos();
   const { logout, user } = useAuth();
+  const { todos, loading, error, addTodo, updateTodo, deleteTodo } = useTodos(user?.id ?? null);
 
   const handleToggle = async (id: string | number) => {
     const todo = todos.find((t) => t.id === id);
@@ -27,9 +27,9 @@ export function Todos() {
           <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Todo App</h1>
-              <p className="text-gray-600">Manage your tasks with style!</p>
+              <p className="text-gray-600">Manage your tasks!</p>
               {user?.traits?.email && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-2">
                   Welcome back, {user.traits.email}!
                 </p>
               )}
@@ -47,7 +47,13 @@ export function Todos() {
 
         {error && !error.isNetworkError && (
           <Card className="p-4 mb-4" bg="red" textColor="white">
-            <p className="font-semibold">Error: {error.message}</p>
+            <p className="font-semibold">
+              {error.status === 401
+                ? 'Please sign in.'
+                : error.status === 403
+                  ? "You can't edit or delete this."
+                  : `Error: ${error.message}`}
+            </p>
           </Card>
         )}
 

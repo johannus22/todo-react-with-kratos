@@ -58,6 +58,61 @@ services:
       timeout: 5s
       retries: 5
 
+  # PostgreSQL database for Ory Keto
+    # PostgreSQL database for Ory Keto
+  keto-db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: keto
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: keto
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - keto-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keto"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Run Keto database migrations
+  keto-migrate:
+    image: oryd/keto:v0.8.0
+    depends_on:
+      keto-db:
+        condition: service_healthy
+    environment:
+      DSN: postgres://keto:secret@keto-db:5432/keto?sslmode=disable&max_conns=20&max_idle_conns=4
+    volumes:
+      - ./keto:/etc/config/keto
+    command: migrate up --config /etc/config/keto/keto.yml -y
+    restart: on-failure
+
+  # Ory Keto (Read 4466, Write 4467)
+  keto:
+    image: oryd/keto:v0.8.0
+    depends_on:
+      keto-migrate:
+        condition: service_completed_successfully
+    environment:
+      DSN: postgres://keto:secret@keto-db:5432/keto?sslmode=disable&max_conns=20&max_idle_conns=4
+    ports:
+      - "4466:4466"   # Read API (check, expand)
+      - "4467:4467"   # Write API (relation-tuples create/delete)
+    volumes:
+      - ./keto:/etc/config/keto
+    command: serve --config /etc/config/keto/keto.yml
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4466/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
 volumes:
   kratos-db-data:
   kratos-sqlite:
+  keto-db-data:

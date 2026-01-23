@@ -22,7 +22,7 @@ export function Dashboard() {
                 Welcome back, <span className="font-semibold">{userEmail}</span>!
               </p>
             </div>
-            <Button onClick={handleLogout} variant="outline">
+            <Button onClick={handleLogout}>
               Logout
             </Button>
           </div>
@@ -30,12 +30,12 @@ export function Dashboard() {
 
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="space-y-2">
+          <div className="flex items-center justify-center">
             <Link to="/todos">
-              <Button className="w-full">Go to Todos</Button>
+              <Button className=" w-3/4">Go to Todos</Button>
             </Link>
             <Link to="/mfa">
-              <Button className="w-full" variant="outline">Manage MFA</Button>
+              <Button className=" w-3/4">Manage MFA</Button>
             </Link>
           </div>
         </Card>

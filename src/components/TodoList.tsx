@@ -23,16 +23,28 @@ export function TodoList({ todos, loading, error, onToggle, onDelete }: TodoList
   }
 
   if (error) {
+    const is401 = error.status === 401;
+    const is403 = error.status === 403;
+    const title = is401
+      ? 'Please sign in'
+      : is403
+        ? 'Permission denied'
+        : isNetworkError
+          ? '⚠️ Connection Error'
+          : 'Error';
+    const message = is401
+      ? 'Please sign in.'
+      : is403
+        ? "You can't edit or delete this."
+        : isNetworkError
+          ? 'Unable to connect to the server. Please make sure the backend is running on http://localhost:8787'
+          : error.message;
     return (
-      <Card className="p-6 mb-4" bg="yellow" textColor="black">
+      <Card className="p-6 mb-4" bg={is401 || is403 ? 'red' : 'yellow'} textColor={is401 || is403 ? 'white' : 'black'}>
         <div className="space-y-2">
-          <h3 className="font-bold text-lg">⚠️ Connection Error</h3>
-          <p>
-            {isNetworkError
-              ? 'Unable to connect to the server. Please make sure the backend is running on http://localhost:8080'
-              : `Error: ${error.message}`}
-          </p>
-          {isNetworkError && (
+          <h3 className="font-bold text-lg">{title}</h3>
+          <p>{message}</p>
+          {isNetworkError && !is401 && !is403 && (
             <p className="text-sm mt-2">
               The app is running in fallback mode. Todos will not be saved until
               the server is available.
@@ -49,7 +61,7 @@ export function TodoList({ todos, loading, error, onToggle, onDelete }: TodoList
       : 'No todos yet. Add one above!';
     
     return (
-      <Card className="p-8 text-center">
+      <Card className="p-8 text-center  ">
         <p className="text-lg text-gray-600">
           {emptyMessage}
         </p>

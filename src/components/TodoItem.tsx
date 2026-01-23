@@ -32,7 +32,7 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
 
   return (
     <Card className="mb-3">
-      <div className="flex items-center gap-3 p-4">
+      <div className="flex items-center gap-4 p-4">
         <input
           type="checkbox"
           checked={todo.completed}
@@ -41,7 +41,7 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           className="w-5 h-5 cursor-pointer"
         />
         <span
-          className={`flex-1 ${
+          className={`flex-1 truncate ${
             todo.completed
               ? 'line-through text-gray-500'
               : 'text-gray-900'

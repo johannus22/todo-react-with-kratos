@@ -50,12 +50,12 @@ chmod +x setup-ory.sh
    echo "VITE_ORY_URL=http://localhost:4433" > .env
    ```
 
-2. Start Ory Kratos services:
+2. Start Ory services (Kratos and Keto):
    ```bash
    docker-compose up -d
    ```
 
-3. Wait for services to be ready (about 10-15 seconds), then verify:
+3. Wait for services to be ready (about 15–20 seconds), then verify:
    ```bash
    curl http://localhost:4433/health/ready
    ```
@@ -96,12 +96,31 @@ The `docker-compose.yml` file sets up the following services:
 | **kratos** | 4434 | Ory Kratos Admin API (for admin operations) |
 | **kratos-db** | 5432 | PostgreSQL database for Kratos |
 | **kratos-migrate** | - | Runs database migrations on startup |
+| **keto** | 4466 | Ory Keto Read API (permission checks, expand) |
+| **keto** | 4467 | Ory Keto Write API (create/delete relation tuples) |
+| **keto-db** | 5433 | PostgreSQL database for Keto |
+| **keto-migrate** | - | Runs Keto migrations on startup |
 
 ### Service Details
 
 - **kratos-db**: PostgreSQL 15 database that stores user identities and sessions
 - **kratos-migrate**: Automatically runs database migrations before Kratos starts
 - **kratos**: Main Ory Kratos service running in development mode with hot-reload
+- **keto-db**: PostgreSQL 15 database for Keto relation tuples (permissions)
+- **keto-migrate**: Runs Keto schema migrations before Keto starts
+- **keto**: Ory Keto authorization; Read (4466) for checks, Write (4467) for relation changes
+
+### Backend: Ory Keto environment variables
+
+Your backend (e.g. on port 8787) should use:
+
+| Variable | Value | Use |
+|----------|--------|-----|
+| `KETO_READ_URL` | `http://localhost:4466` | Permission checks (`check`, `expand`), listing relation tuples |
+| `KETO_WRITE_URL` | `http://localhost:4467` | Creating/deleting relation tuples (e.g. on todo create, share, revoke) |
+
+- **`KETO_READ_URL`** must point to the **Read API (port 4466)**. If it is set to `http://localhost:4467`, that is the Write API; permission checks will not work correctly on that port.
+- **`KETO_WRITE_URL`** is used when creating relations (e.g. grant owner on new todo) or deleting them (revoke).
 
 ### Managing Docker Services
 
@@ -251,9 +270,8 @@ docker-compose restart kratos-db
 ### Frontend Issues
 
 **CORS errors:**
-- Ensure `VITE_ORY_URL=http://localhost:4433` is in your `.env` file
-- Check that `kratos/kratos.yml` has your frontend URL in `allowed_origins`
-- Restart Kratos: `docker-compose restart kratos`
+- **Kratos (auth):** Ensure `VITE_ORY_URL=http://localhost:4433` is in your `.env`; check `kratos/kratos.yml` has your frontend URL in `allowed_origins`; restart Kratos: `docker-compose restart kratos`
+- **Todo API (backend on 8787):** The backend must allow your frontend origin (e.g. `http://localhost:5173` or `http://localhost:3000`) in `Access-Control-Allow-Origin` and `X-User-Id` in `Access-Control-Allow-Headers`. See **API.md → CORS Configuration**.
 
 **Session not persisting:**
 - Check browser console for cookie issues

@@ -120,7 +120,7 @@ export function MFA() {
                 Manage your two-factor authentication settings
               </p>
             </div>
-            <Button onClick={() => navigate('/todos')} variant="outline">
+            <Button onClick={() => navigate('/todos')}>
               Back to Todos
             </Button>
           </div>

@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Card } from 'pixel-retroui';
 import { OryForm } from '../components/OryForm';
 import * as ory from '../services/ory';
-import type { OryFlow } from '../services/ory';
-import { useAuth } from '../contexts/AuthContext';
+import type { OryFlow, OrySession } from '../services/ory';
 
 export function Login() {
   const [flow, setFlow] = useState<OryFlow | null>(null);
@@ -12,7 +11,6 @@ export function Login() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { checkSession } = useAuth();
 
   const returnTo = searchParams.get('return_to') || '/dashboard';
 
@@ -43,33 +41,32 @@ export function Login() {
     initFlow();
   }, [returnTo, navigate]);
 
-  const handleFlowSubmit = async (completedFlow: OryFlow) => {
-  // ✅ If Ory returned a session, login is done
-  if (completedFlow.session) {
-    // Check if Ory wants to redirect somewhere
-    const flowWithRedirect = completedFlow as OryFlow & {
+  const handleFlowSubmit = async (
+    completedFlow: OryFlow & {
+      session?: OrySession;
       redirect_to?: string;
       continue_with?: Array<{ redirect_browser_to?: string }>;
-    };
+    }
+  ) => {
+    // If Ory returned a session, login is done
+    if (completedFlow.session) {
+      const redirectTo =
+        completedFlow.redirect_to ||
+        completedFlow.continue_with?.[0]?.redirect_browser_to;
 
-    const redirectTo =
-      flowWithRedirect.redirect_to ||
-      flowWithRedirect.continue_with?.[0]?.redirect_browser_to;
+      if (redirectTo) {
+        window.location.href = redirectTo;
+        return;
+      }
 
-    if (redirectTo) {
-      window.location.href = redirectTo;
+      // Navigate immediately
+      navigate(returnTo, { replace: true });
       return;
     }
 
-    // ✅ Navigate immediately
-    navigate(returnTo, { replace: true });
-    return;
-  }
-
-  // ❌ Otherwise, still in flow (errors, MFA, etc)
-  setFlow(completedFlow);
-};
-
+    // Otherwise, still in flow (errors, MFA, etc)
+    setFlow(completedFlow);
+  };
 
   const handleFlowError = (err: Error) => {
     setError(err.message);
@@ -110,7 +107,7 @@ export function Login() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-      <Card className="p-6 w-full max-w-md">
+      <Card className="p-10 w-1/2 max-w-md">
         <h1 className="text-3xl font-bold mb-2">Login</h1>
         <p className="text-gray-600 mb-6">Sign in to your account</p>
 
@@ -118,6 +115,7 @@ export function Login() {
           flow={flow}
           onSubmit={handleFlowSubmit}
           onError={handleFlowError}
+          showPasswordToggles
         />
 
         <div className="mt-6 text-center text-sm">

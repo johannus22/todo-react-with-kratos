@@ -70,7 +70,7 @@ export function Register() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-        <Card className="p-6 w-full max-w-md">
+        <Card className="p-6 w-1/2 max-w-md">
           <p className="text-center">Loading registration form...</p>
         </Card>
       </div>
@@ -122,6 +122,8 @@ const isMultiStep =
           flow={flow}
           onSubmit={handleFlowSubmit}
           onError={handleFlowError}
+          showPasswordToggles
+          requirePasswordConfirmation
         />
 
         <div className="mt-6 text-center text-sm">

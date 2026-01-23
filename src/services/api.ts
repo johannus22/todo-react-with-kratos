@@ -35,102 +35,112 @@ function createApiError(error: unknown, status?: number): ApiError {
   };
 }
 
+function getMessageFromBody(
+  body: { message?: string; error?: string; detail?: string; reason?: string },
+  fallback: string,
+  status?: number
+): string {
+  const msg = body?.message || body?.error || body?.detail || body?.reason;
+  if (msg) return msg;
+  if (status === 500) return 'Server error (500). Check backend logs (Supabase, Keto, worker).';
+  return fallback;
+}
+
+type ApiOptions = RequestInit & { userId?: string | null };
+
 /**
- * Generic API helper that wraps fetch with cookie support and JSON headers
+ * Generic API helper: cookie support, JSON headers, X-User-Id when userId is provided.
  */
-async function api(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<Response> {
+async function api(endpoint: string, options: ApiOptions = {}): Promise<Response> {
+  const { userId, ...fetchInit } = options;
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(fetchInit.headers as Record<string, string>),
   };
+  if (userId) {
+    (headers as Record<string, string>)['X-User-Id'] = userId;
+  }
 
-  const response = await fetch(url, {
-    ...options,
+  return fetch(url, {
+    ...fetchInit,
     headers,
     credentials: 'include',
   });
-
-  return response;
 }
 
 /**
- * Fetches all todos from the API
+ * Fetches all todos from the API. Sends X-User-Id when userId is provided.
  */
-export async function getTodos(): Promise<Todo[]> {
+export async function getTodos(userId: string | null): Promise<Todo[]> {
   try {
-    const response = await api('/api/todos');
-    
+    const response = await api('/api/todos', { userId });
     if (!response.ok) {
-      throw new Error(`Failed to fetch todos: ${response.status} ${response.statusText}`);
+      const body = await response.json().catch(() => ({}));
+      throw createApiError(new Error(getMessageFromBody(body, response.statusText, response.status)), response.status);
     }
-    
-    const todos = await response.json();
-    return todos;
+    return response.json();
   } catch (error) {
+    if ((error as ApiError).status !== undefined) throw error;
     throw createApiError(error);
   }
 }
 
 /**
- * Creates a new todo
+ * Creates a new todo. Sends X-User-Id when userId is provided.
  */
-export async function createTodo(title: string): Promise<Todo> {
+export async function createTodo(title: string, userId: string | null): Promise<Todo> {
   try {
     const response = await api('/api/todos', {
       method: 'POST',
       body: JSON.stringify({ title }),
+      userId,
     });
-    
     if (!response.ok) {
-      throw new Error(`Failed to create todo: ${response.status} ${response.statusText}`);
+      const body = await response.json().catch(() => ({}));
+      throw createApiError(new Error(getMessageFromBody(body, response.statusText, response.status)), response.status);
     }
-    
-    const todo = await response.json();
-    return todo;
+    return response.json();
   } catch (error) {
+    if ((error as ApiError).status !== undefined) throw error;
     throw createApiError(error);
   }
 }
 
 /**
- * Updates an existing todo
+ * Updates an existing todo. Sends X-User-Id when userId is provided.
  */
-export async function updateTodo(id: string | number, updates: Partial<Todo>): Promise<Todo> {
+export async function updateTodo(id: string | number, updates: Partial<Todo>, userId: string | null): Promise<Todo> {
   try {
     const response = await api(`/api/todos/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
+      userId,
     });
-    
     if (!response.ok) {
-      throw new Error(`Failed to update todo: ${response.status} ${response.statusText}`);
+      const body = await response.json().catch(() => ({}));
+      throw createApiError(new Error(getMessageFromBody(body, response.statusText, response.status)), response.status);
     }
-    
-    const todo = await response.json();
-    return todo;
+    return response.json();
   } catch (error) {
+    if ((error as ApiError).status !== undefined) throw error;
     throw createApiError(error);
   }
 }
 
 /**
- * Deletes a todo
+ * Deletes a todo. Sends X-User-Id when userId is provided.
  */
-export async function deleteTodo(id: string | number): Promise<void> {
+export async function deleteTodo(id: string | number, userId: string | null): Promise<void> {
   try {
-    const response = await api(`/api/todos/${id}`, {
-      method: 'DELETE',
-    });
-    
+    const response = await api(`/api/todos/${id}`, { method: 'DELETE', userId });
     if (!response.ok) {
-      throw new Error(`Failed to delete todo: ${response.status} ${response.statusText}`);
+      const body = await response.json().catch(() => ({}));
+      throw createApiError(new Error(getMessageFromBody(body, response.statusText, response.status)), response.status);
     }
   } catch (error) {
+    if ((error as ApiError).status !== undefined) throw error;
     throw createApiError(error);
   }
 }
