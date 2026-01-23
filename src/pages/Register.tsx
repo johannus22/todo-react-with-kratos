@@ -110,7 +110,7 @@ const isMultiStep =
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-      <Card className="p-6 w-full max-w-md">
+      <Card className="p-6 w-1/2">
         <h1 className="text-3xl font-bold mb-2">Register</h1>
         <p className="text-gray-600 mb-6">
           {isMultiStep && !flow?.ui.nodes.some(n => n.attributes.type === 'password')
@@ -124,6 +124,7 @@ const isMultiStep =
           onError={handleFlowError}
           showPasswordToggles
           requirePasswordConfirmation
+          requirePasswordStrength
         />
 
         <div className="mt-6 text-center text-sm">

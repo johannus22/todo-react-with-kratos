@@ -32,10 +32,10 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="flex items-center justify-center">
             <Link to="/todos">
-              <Button className=" w-3/4">Go to Todos</Button>
+              <Button className=" w-3/4" bg='green' textColor='white'>Go to Todos</Button>
             </Link>
             <Link to="/mfa">
-              <Button className=" w-3/4">Manage MFA</Button>
+              <Button className="w-3/4" bg='blue' textColor='white'>Manage MFA</Button>
             </Link>
           </div>
         </Card>

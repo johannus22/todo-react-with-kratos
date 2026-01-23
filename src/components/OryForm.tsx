@@ -11,6 +11,7 @@ interface OryFormProps {
   loading?: boolean;
   showPasswordToggles?: boolean;
   requirePasswordConfirmation?: boolean;
+  requirePasswordStrength?: boolean;
 }
 
 export function OryForm({
@@ -20,6 +21,7 @@ export function OryForm({
   loading: externalLoading,
   showPasswordToggles = false,
   requirePasswordConfirmation = false,
+  requirePasswordStrength = false,
 }: OryFormProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -33,6 +35,9 @@ export function OryForm({
     return passwordNode?.attributes.name ?? '';
   }, [nodes]);
   const confirmPasswordFieldName = 'confirm_password';
+
+  const isStrongPassword = (value: string) =>
+    /[A-Za-z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
 
 
   // Initialize form data from flow nodes
@@ -66,6 +71,24 @@ useEffect(() => {
         return newErrors;
       });
     }
+
+    if (requirePasswordStrength && name === passwordFieldName) {
+      if (!value) {
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[name];
+          return next;
+        });
+        return;
+      }
+
+      if (!isStrongPassword(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: 'Password must include a letter, number, and symbol.',
+        }));
+      }
+    }
   };
 
  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -74,6 +97,16 @@ useEffect(() => {
   setErrors({});
 
   try {
+    if (requirePasswordStrength && passwordFieldName) {
+      const passwordValue = formData[passwordFieldName] || '';
+
+      if (passwordValue && !isStrongPassword(passwordValue)) {
+        setErrors({ [passwordFieldName]: 'Password must include a letter, number, and symbol.' });
+        setLoading(false);
+        return;
+      }
+    }
+
     if (requirePasswordConfirmation && passwordFieldName) {
       const passwordValue = formData[passwordFieldName] || '';
       const confirmValue = formData[confirmPasswordFieldName] || '';
@@ -275,6 +308,11 @@ useEffect(() => {
         return (
           <Fragment key={`${fieldName}-password-group`}>
             {renderPasswordInput(fieldName, label, fieldValue, attributes.required, node.messages)}
+            {requirePasswordStrength && fieldName === passwordFieldName && (
+              <p className="mt-1 text-xs text-gray-600">
+                Must include at least one letter, one number, and one symbol.
+              </p>
+            )}
             {requirePasswordConfirmation &&
               fieldName === passwordFieldName &&
               renderPasswordInput(
