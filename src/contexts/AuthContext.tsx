@@ -7,6 +7,7 @@ interface AuthContextType {
   user: OryIdentity | null;
   session: OrySession | null;
   loading: boolean;
+  isAdmin: boolean;
   checkSession: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -21,6 +22,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<OryIdentity | null>(null);
   const [session, setSession] = useState<OrySession | null>(null);
   const [loading, setLoading] = useState(true);
+  const isAdmin = Boolean(
+    user?.metadata_public?.role === 'admin' ||
+    user?.traits?.role === 'admin'
+  );
 
   const checkSession = async () => {
     setLoading(true);
@@ -60,7 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, checkSession, logout }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, checkSession, logout }}>
       {children}
     </AuthContext.Provider>
   );

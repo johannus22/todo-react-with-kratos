@@ -6,6 +6,40 @@ All endpoints return JSON responses. Error responses follow a consistent format.
 
 ## Endpoints
 
+### Admin: Get All Todos
+
+Retrieves a list of all todos across all accounts. **Admin-only**.
+
+**URL:** `/api/admin/todos`
+
+**Method:** `GET`
+
+**Request Headers:**
+```
+X-User-Id: <Kratos identity.id>   (required for auth/Keto)
+```
+
+**Response:** Same as **Get All Todos**.
+
+---
+
+### Admin: Delete Any Todo
+
+Deletes any todo by id. **Admin-only**.
+
+**URL:** `/api/admin/todos/:id`
+
+**Method:** `DELETE`
+
+**Request Headers:**
+```
+X-User-Id: <Kratos identity.id>   (required for auth/Keto)
+```
+
+**Response:** Same as **Delete a Todo**.
+
+---
+
 ### Get All Todos
 
 Retrieves a list of all todos.

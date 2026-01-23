@@ -1,9 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Card, Button } from 'pixel-retroui';
 import { useAuth } from '../contexts/AuthContext';
+import { AdminTodoList } from '../components/AdminTodoList';
+import { useAdminTodos } from '../hooks/useAdminTodos';
 
 export function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
+  const {
+    todos: adminTodos,
+    loading: adminLoading,
+    error: adminError,
+    deleteTodo: deleteAdminTodo,
+    refetch: refetchAdminTodos,
+  } = useAdminTodos(isAdmin ? user?.id ?? null : null);
 
   const handleLogout = async () => {
     await logout();
@@ -28,7 +37,7 @@ export function Dashboard() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="flex items-center justify-center">
             <Link to="/todos">
@@ -39,6 +48,26 @@ export function Dashboard() {
             </Link>
           </div>
         </Card>
+
+        {isAdmin && (
+          <Card className="p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold">Admin: All Todos</h2>
+                <p className="text-sm text-gray-600">View and delete todos across all accounts.</p>
+              </div>
+              <Button onClick={refetchAdminTodos} bg="blue" textColor="white">
+                Refresh
+              </Button>
+            </div>
+            <AdminTodoList
+              todos={adminTodos}
+              loading={adminLoading}
+              error={adminError}
+              onDelete={deleteAdminTodo}
+            />
+          </Card>
+        )}
       </div>
     </div>
   );

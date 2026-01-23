@@ -146,6 +146,39 @@ export async function deleteTodo(id: string | number, userId: string | null): Pr
 }
 
 /**
+ * Fetches all todos across accounts (admin-only).
+ */
+export async function getAllTodos(userId: string | null): Promise<Todo[]> {
+  try {
+    const response = await api('/api/admin/todos', { userId });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw createApiError(new Error(getMessageFromBody(body, response.statusText, response.status)), response.status);
+    }
+    return response.json();
+  } catch (error) {
+    if ((error as ApiError).status !== undefined) throw error;
+    throw createApiError(error);
+  }
+}
+
+/**
+ * Deletes a todo as admin (admin-only).
+ */
+export async function deleteTodoAsAdmin(id: string | number, userId: string | null): Promise<void> {
+  try {
+    const response = await api(`/api/admin/todos/${id}`, { method: 'DELETE', userId });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw createApiError(new Error(getMessageFromBody(body, response.statusText, response.status)), response.status);
+    }
+  } catch (error) {
+    if ((error as ApiError).status !== undefined) throw error;
+    throw createApiError(error);
+  }
+}
+
+/**
  * Logs in a user (mocked for now, ready for Ory integration)
  */
 export async function login(email: string, password: string): Promise<void> {
