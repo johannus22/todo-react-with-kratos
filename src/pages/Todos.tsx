@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { AddTodoForm } from "../components/AddTodoForm";
 import { TodoList } from "../components/TodoList";
 import { useTodos } from "../hooks/useTodos";
@@ -34,12 +35,19 @@ export function Todos() {
                 </p>
               )}
             </div>
-            <Button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link to="/dashboard">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Dashboard
+                </Button>
+              </Link>
+              <Button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </Card>
 
