@@ -12,6 +12,7 @@ interface OryFormProps {
   showPasswordToggles?: boolean;
   requirePasswordConfirmation?: boolean;
   requirePasswordStrength?: boolean;
+  singleSubmit?: boolean;
 }
 
 export function OryForm({
@@ -22,12 +23,66 @@ export function OryForm({
   showPasswordToggles = false,
   requirePasswordConfirmation = false,
   requirePasswordStrength = false,
+  singleSubmit = false,
 }: OryFormProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [passwordVisibility, setPasswordVisibility] = useState<Record<string, boolean>>({});
   const nodes = useMemo(() => flow?.ui?.nodes ?? [], [flow]);
+  const nodesWithIndex = useMemo(
+    () => nodes.map((node, index) => ({ node, index })),
+    [nodes]
+  );
+  const groupedNodesWithIndex = useMemo(() => {
+    return nodesWithIndex.reduce((acc, item) => {
+      const group = item.node.group || 'default';
+      if (!acc[group]) {
+        acc[group] = [];
+      }
+      acc[group].push(item);
+      return acc;
+    }, {} as Record<string, Array<{ node: UINode; index: number }>>);
+  }, [nodesWithIndex]);
+  const submitIndexes = useMemo(
+    () =>
+      nodes
+        .map((node, idx) =>
+          node.type === 'input' && node.attributes.type === 'submit' ? idx : -1
+        )
+        .filter((idx) => idx >= 0),
+    [nodes]
+  );
+  const preferredSubmitIndex = useMemo(() => {
+    if (!singleSubmit) return -1;
+    const submitCandidates = nodes
+      .map((node, idx) => {
+        if (!(node.type === 'input' && node.attributes.type === 'submit')) {
+          return null;
+        }
+        const label =
+          node.attributes.label?.text ||
+          node.meta?.label?.text ||
+          node.attributes.value ||
+          '';
+        return { idx, label, value: node.attributes.value || '' };
+      })
+      .filter((item): item is { idx: number; label: string; value: string } => Boolean(item));
+
+    const saveLike = submitCandidates.filter((item) => {
+      const text = `${item.label} ${item.value}`.toLowerCase();
+      return text.includes('save');
+    });
+
+    if (saveLike.length > 0) {
+      return saveLike[saveLike.length - 1].idx;
+    }
+
+    return -1;
+  }, [nodes, singleSubmit]);
+  const lastSubmitIndex = submitIndexes.length
+    ? submitIndexes[submitIndexes.length - 1]
+    : -1;
   const passwordFieldName = useMemo(() => {
     const passwordNode = nodes.find(
       (node) => node.type === 'input' && node.attributes.type === 'password'
@@ -136,6 +191,9 @@ useEffect(() => {
         if (node.attributes.type === "submit") {
           if (submitter && submitter.name === name) {
             body[name] = submitter.value;
+          } else if (!submitter && body[name] === undefined) {
+            // Fallback for Enter key submits: pick the first submit value.
+            body[name] = node.attributes.value ?? "";
           }
         } else {
           body[name] =
@@ -209,7 +267,7 @@ useEffect(() => {
   };
 
   // Render a single UI node
-  const renderNode = (node: UINode) => {
+  const renderNode = (node: UINode, nodeIndex: number) => {
     const { attributes } = node;
 
     // Hidden inputs (CSRF tokens, flow IDs, etc.)
@@ -403,6 +461,11 @@ useEffect(() => {
 
     // Submit buttons
     if (node.type === 'input' && attributes.type === 'submit') {
+      const chosenSubmitIndex =
+        preferredSubmitIndex >= 0 ? preferredSubmitIndex : lastSubmitIndex;
+      if (singleSubmit && nodeIndex !== chosenSubmitIndex) {
+        return null;
+      }
       const label = attributes.label?.text || node.meta?.label?.text || attributes.value || 'Submit';
       const buttonValue = attributes.value || '';
       const buttonName = attributes.name || '';
@@ -435,6 +498,24 @@ useEffect(() => {
       );
     }
 
+    // Images (e.g., TOTP QR code)
+    if (node.type === 'img' && attributes.src) {
+      return (
+        <div key={attributes.id || attributes.src} className="mb-4 flex flex-col items-center gap-2">
+          <img
+            src={attributes.src}
+            alt={attributes.title || node.meta?.label?.text || 'Authenticator QR code'}
+            className="max-w-full h-auto border border-gray-200 rounded"
+          />
+          {(node.meta?.label?.text || attributes.title) && (
+            <p className="text-sm text-gray-600 text-center">
+              {node.meta?.label?.text || attributes.title}
+            </p>
+          )}
+        </div>
+      );
+    }
+
     // Text nodes (labels, info text)
     if (node.type === 'text') {
       return (
@@ -447,34 +528,21 @@ useEffect(() => {
     return null;
   };
 
-  // Group nodes by their group attribute
-  const groupedNodes = nodes.reduce((acc, node) => {
-    const group = node.group || 'default';
-    if (!acc[group]) {
-      acc[group] = [];
-    }
-    acc[group].push(node);
-    return acc;
-  }, {} as Record<string, UINode[]>);
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {renderMessages()}
       
       {/* Render hidden inputs first */}
-      {nodes
-        .filter((node) => node.type === 'input' && node.attributes.type === 'hidden')
-        .map((node) => renderNode(node))}
+      {nodesWithIndex
+        .filter(({ node }) => node.type === 'input' && node.attributes.type === 'hidden')
+        .map(({ node, index }) => renderNode(node, index))}
 
       {/* Render visible inputs grouped */}
-      {Object.entries(groupedNodes).map(([group, nodes]) => (
+      {Object.entries(groupedNodesWithIndex).map(([group, groupNodes]) => (
         <div key={group}>
-          {nodes
-            .filter((node) => node.type !== 'input' || node.attributes.type !== 'hidden')
-            .map((node) => {
-              const rendered = renderNode(node);
-              return rendered;
-            })}
+          {groupNodes
+            .filter(({ node }) => node.type !== 'input' || node.attributes.type !== 'hidden')
+            .map(({ node, index }) => renderNode(node, index))}
         </div>
       ))}
     </form>

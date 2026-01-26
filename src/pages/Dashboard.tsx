@@ -31,7 +31,7 @@ export function Dashboard() {
                 Welcome back, <span className="font-semibold">{userEmail}</span>!
               </p>
             </div>
-            <Button onClick={handleLogout}>
+            <Button onClick={handleLogout} bg="red" textColor="white">
               Logout
             </Button>
           </div>
@@ -39,12 +39,21 @@ export function Dashboard() {
 
         <Card className="p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
             <Link to="/todos">
-              <Button className=" w-3/4" bg='green' textColor='white'>Go to Todos</Button>
+              <Button className="w-full sm:w-40" bg="blue" textColor="white">
+                Go to Todos
+              </Button>
             </Link>
             <Link to="/mfa">
-              <Button className="w-3/4" bg='blue' textColor='white'>Manage MFA</Button>
+              <Button className="w-full sm:w-40" bg="yellow" textColor="black">
+                Manage MFA
+              </Button>
+            </Link>
+            <Link to="/settings">
+              <Button className="w-full sm:w-40" bg="gray" textColor="white">
+                Account Settings
+              </Button>
             </Link>
           </div>
         </Card>

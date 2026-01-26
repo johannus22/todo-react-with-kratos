@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { Recovery } from './pages/Recovery';
+import { Settings } from './pages/Settings';
 import { Dashboard } from './pages/Dashboard';
 import { Todos } from './pages/Todos';
 import { MFA } from './pages/MFA';
@@ -14,6 +16,15 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/recovery" element={<Recovery />} />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/register" element={<Register />} />
       <Route path="/logout" element={<Logout />} />
       <Route

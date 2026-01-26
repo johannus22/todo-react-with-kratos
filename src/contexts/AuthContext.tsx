@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import * as ory from '../services/ory';
 import type { OryIdentity, OrySession } from '../services/ory';
+import { normalizeUrl } from '../services/ory';
 
 interface AuthContextType {
   user: OryIdentity | null;
@@ -35,6 +36,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setSession(response.session);
         setUser(response.session.identity);
       } else {
+        if (response.redirect_browser_to) {
+          const currentPath = window.location.pathname || '';
+          const currentSearch = window.location.search || '';
+          const onLoginFlow = currentPath === '/login' && currentSearch.includes('flow=');
+          if (!onLoginFlow) {
+            window.location.href = normalizeUrl(response.redirect_browser_to);
+            return;
+          }
+        }
         setSession(null);
         setUser(null);
       }

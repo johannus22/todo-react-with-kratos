@@ -106,7 +106,11 @@ export interface WhoAmIResponse {
     status: string;
     message: string;
     reason?: string;
+    details?: {
+      redirect_browser_to?: string;
+    };
   };
+  redirect_browser_to?: string;
 }
 
 /**
@@ -123,7 +127,7 @@ export function getOryUrl(): string {
 /**
  * Normalize URL to replace Docker container hostnames with localhost
  */
-function normalizeUrl(url: string): string {
+export function normalizeUrl(url: string): string {
   const baseUrl = getOryUrl();
   try {
     const urlObj = new URL(url);
@@ -172,35 +176,39 @@ async function oryFetch(
  * @param returnTo - Optional return URL after flow completion
  */
 export async function fetchFlow(
-  flowType: 'login' | 'registration' | 'settings' | 'logout',
+  flowType: 'login' | 'registration' | 'settings' | 'logout' | 'recovery',
   flowId?: string,
-  returnTo?: string
+  returnTo?: string,
+  refresh?: boolean
 ): Promise<OryFlow> {
   let endpoint = '';
-  
-  switch (flowType) {
-    case 'login':
-      endpoint = '/self-service/login/browser';
-      break;
-    case 'registration':
-      endpoint = '/self-service/registration/browser';
-      break;
-    case 'settings':
-      endpoint = '/self-service/settings/browser';
-      break;
-    case 'logout':
-      endpoint = '/self-service/logout/browser';
-      break;
-  }
 
-  if (flowId) {
-    endpoint += `?flow=${flowId}`;
+  if (flowId && flowType !== 'logout') {
+    endpoint = `/self-service/${flowType}/flows?id=${flowId}`;
   } else {
+    switch (flowType) {
+      case 'login':
+        endpoint = '/self-service/login/browser';
+        break;
+      case 'registration':
+        endpoint = '/self-service/registration/browser';
+        break;
+      case 'settings':
+        endpoint = '/self-service/settings/browser';
+        break;
+      case 'recovery':
+        endpoint = '/self-service/recovery/browser';
+        break;
+      case 'logout':
+        endpoint = '/self-service/logout/browser';
+        break;
+    }
+
     const params = new URLSearchParams();
     if (returnTo) {
       params.set('return_to', returnTo);
     }
-    if (flowType === 'login') {
+    if (flowType === 'login' && refresh) {
       params.set('refresh', 'true');
     }
     if (params.toString()) {
@@ -254,6 +262,15 @@ export async function submitFlow(action: string, body: any, method: string) {
   }
 
   if (!res.ok) {
+    if (
+      data?.error?.id === 'browser_location_change_required' &&
+      data?.redirect_browser_to
+    ) {
+      const redirectUrl = normalizeUrl(data.redirect_browser_to);
+      window.location.href = redirectUrl;
+      return data;
+    }
+
     throw new Error(
       data?.ui?.messages?.[0]?.text ||
       data?.error?.message ||
@@ -280,7 +297,16 @@ export async function whoami(): Promise<WhoAmIResponse> {
     const error = await response.json().catch(() => ({
       error: { message: `Session check failed: ${response.statusText}` }
     }));
-    return { error: { code: response.status, status: response.statusText, message: error.error?.message || 'Session check failed' } };
+    return {
+      error: {
+        code: response.status,
+        status: response.statusText,
+        message: error.error?.message || 'Session check failed',
+        reason: error.error?.reason,
+        details: error.error?.details,
+      },
+      redirect_browser_to: error.redirect_browser_to || error.error?.details?.redirect_browser_to,
+    };
   }
 
   const session = await response.json();

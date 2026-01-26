@@ -53,13 +53,19 @@ export function MFA() {
     return nodes.filter((node) => {
       const name = node.attributes.name || '';
       const group = node.group || '';
+      const isHidden = node.type === 'input' && node.attributes.type === 'hidden';
+      const isSubmit = node.type === 'input' && node.attributes.type === 'submit';
+      const submitValue = node.attributes.value || '';
+      const isTotpSubmit = isSubmit && (submitValue.includes('totp') || submitValue.includes('otp'));
       return (
+        isHidden ||
         name.includes('totp') ||
         name.includes('otp') ||
         name.includes('mfa') ||
         name.includes('webauthn') ||
         group.includes('totp') ||
-        group.includes('webauthn')
+        group.includes('webauthn') ||
+        isTotpSubmit
       );
     });
   };

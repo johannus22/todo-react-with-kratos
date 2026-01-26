@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Card } from 'pixel-retroui';
 import { OryForm } from '../components/OryForm';
 import * as ory from '../services/ory';
+import { normalizeUrl } from '../services/ory';
 import type { OryFlow, OrySession } from '../services/ory';
 
 export function Login() {
@@ -12,7 +13,17 @@ export function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const returnTo = searchParams.get('return_to') || '/dashboard';
+  const rawReturnTo = searchParams.get('return_to') || '/dashboard';
+  const returnTo = (() => {
+    try {
+      const url = new URL(rawReturnTo, window.location.origin);
+      url.searchParams.delete('flow');
+      return `${url.pathname}${url.search}`;
+    } catch {
+      return rawReturnTo.split('?')[0];
+    }
+  })();
+  const flowId = searchParams.get('flow') || undefined;
 
   useEffect(() => {
     const initFlow = async () => {
@@ -20,18 +31,28 @@ export function Login() {
         setLoading(true);
         setError(null);
 
-        // First check if user is already authenticated
-        const sessionResponse = await ory.whoami();
-        if (sessionResponse.session && sessionResponse.session.active) {
-          // User is already logged in, redirect to dashboard
-          navigate(returnTo, { replace: true });
-          return;
+        // Only check session if we are not resuming an existing flow
+        if (!flowId) {
+          const sessionResponse = await ory.whoami();
+          if (sessionResponse.redirect_browser_to) {
+            window.location.href = normalizeUrl(sessionResponse.redirect_browser_to);
+            return;
+          }
+          if (sessionResponse.session && sessionResponse.session.active) {
+            // User is already logged in, redirect to dashboard
+            navigate(returnTo, { replace: true });
+            return;
+          }
         }
 
-        const loginFlow = await ory.fetchFlow('login', undefined, returnTo);
+        const loginFlow = await ory.fetchFlow('login', flowId, returnTo, false);
         setFlow(loginFlow);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load login form';
+        if (errorMessage.toLowerCase().includes('already logged in')) {
+          navigate(returnTo, { replace: true });
+          return;
+        }
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -39,7 +60,7 @@ export function Login() {
     };
 
     initFlow();
-  }, [returnTo, navigate]);
+  }, [returnTo, flowId, navigate]);
 
   const handleFlowSubmit = async (
     completedFlow: OryFlow & {
@@ -48,17 +69,17 @@ export function Login() {
       continue_with?: Array<{ redirect_browser_to?: string }>;
     }
   ) => {
+    const redirectTo =
+      completedFlow.redirect_to ||
+      completedFlow.continue_with?.[0]?.redirect_browser_to;
+
+    if (redirectTo) {
+      window.location.href = redirectTo;
+      return;
+    }
+
     // If Ory returned a session, login is done
     if (completedFlow.session) {
-      const redirectTo =
-        completedFlow.redirect_to ||
-        completedFlow.continue_with?.[0]?.redirect_browser_to;
-
-      if (redirectTo) {
-        window.location.href = redirectTo;
-        return;
-      }
-
       // Navigate immediately
       navigate(returnTo, { replace: true });
       return;
@@ -105,6 +126,15 @@ export function Login() {
     return null;
   }
 
+  const alreadyLoggedIn = flow.ui?.messages?.some(
+    (msg) => msg.text?.toLowerCase().includes('already logged in')
+  );
+
+  if (alreadyLoggedIn) {
+    window.location.href = returnTo;
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
       <Card className="p-10 w-1/2 max-w-md">
@@ -118,7 +148,12 @@ export function Login() {
           showPasswordToggles
         />
 
-        <div className="mt-6 text-center text-sm">
+        <div className="mt-4 text-center text-sm">
+          <Link to="/recovery" className="text-blue-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+        <div className="mt-4 text-center text-sm">
           <span className="text-gray-600">Don't have an account? </span>
           <Link to="/register" className="text-blue-600 hover:underline">
             Register
