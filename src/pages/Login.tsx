@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Card } from 'pixel-retroui';
+import { Card } from '../components/ui/Card';
 import { OryForm } from '../components/OryForm';
 import * as ory from '../services/ory';
 import { normalizeUrl } from '../services/ory';
@@ -95,9 +95,9 @@ export function Login() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
+      <div className="page-shell flex items-start sm:items-center justify-center">
         <Card className="p-6 w-full max-w-md">
-          <p className="text-center">Loading login form...</p>
+          <p className="text-center text-gray-700">Loading login form...</p>
         </Card>
       </div>
     );
@@ -105,15 +105,15 @@ export function Login() {
 
   if (error && !flow) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
+      <div className="page-shell flex items-start sm:items-center justify-center">
         <Card className="p-6 w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-2">Login</h1>
+          <h1 className="text-3xl font-semibold mb-2">Login</h1>
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="w-full px-4 py-2 bg-[#1f6feb] text-white rounded hover:bg-[#1a56c4]"
           >
             Retry
           </button>
@@ -136,26 +136,26 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-      <Card className="p-10 w-1/2 max-w-md">
-        <h1 className="text-3xl font-bold mb-2">Login</h1>
-        <p className="text-gray-600 mb-6">Sign in to your account</p>
+    <div className="page-shell flex items-start sm:items-center justify-center">
+      <Card className="p-9 sm:p-11 padding-have w-full max-w-md fade-up">
+        <span className="page-kicker text-xs text-[#6b5a46]">Welcome back</span>
+        <h1 className="text-3xl font-semibold mt-2">Login</h1>
+        <p className="text-gray-600 mb-7">Sign in to pick up where you left off.</p>
 
         <OryForm
           flow={flow}
           onSubmit={handleFlowSubmit}
           onError={handleFlowError}
-          showPasswordToggles
         />
 
-        <div className="mt-4 text-center text-sm">
-          <Link to="/recovery" className="text-blue-600 hover:underline">
+        <div className="mt-4 text-center padding-have text-sm">
+          <Link to="/recovery" className="text-[#1f6feb] hover:underline">
             Forgot password?
           </Link>
         </div>
         <div className="mt-4 text-center text-sm">
           <span className="text-gray-600">Don't have an account? </span>
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-[#1f6feb] hover:underline">
             Register
           </Link>
         </div>

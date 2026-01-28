@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from 'pixel-retroui';
+import { Card } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
 
 export function Logout() {
@@ -34,9 +34,9 @@ export function Logout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-        <Card className="p-6 w-full max-w-md">
-          <p className="text-center">Logging out...</p>
+      <div className="page-shell flex items-start sm:items-center justify-center">
+        <Card className="p-8 w-full max-w-md">
+          <p className="text-center text-gray-700">Logging out...</p>
         </Card>
       </div>
     );
@@ -44,9 +44,9 @@ export function Logout() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-        <Card className="p-6 w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-2">Logout</h1>
+      <div className="page-shell flex items-start sm:items-center justify-center">
+        <Card className="p-8 w-full max-w-md">
+          <h1 className="text-3xl font-semibold mb-2">Logout</h1>
           <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
             {error}
           </div>

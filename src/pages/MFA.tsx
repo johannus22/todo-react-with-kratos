@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button } from 'pixel-retroui';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { OryForm } from '../components/OryForm';
 import * as ory from '../services/ory';
 import type { OryFlow, UINode } from '../services/ory';
@@ -72,10 +73,10 @@ export function MFA() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="page-shell">
+        <div className="max-w-3xl mx-auto">
           <Card className="p-6">
-            <p className="text-center">Loading MFA settings...</p>
+            <p className="text-center text-gray-700">Loading MFA settings...</p>
           </Card>
         </div>
       </div>
@@ -84,14 +85,16 @@ export function MFA() {
 
   if (error && !flow) {
     return (
-      <div className="min-h-screen bg-gray-100 py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="page-shell">
+        <div className="max-w-3xl mx-auto">
           <Card className="p-6">
-            <h1 className="text-3xl font-bold mb-2">Multi-Factor Authentication</h1>
+            <h1 className="text-3xl font-semibold mb-2">Multi-Factor Authentication</h1>
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               {error}
             </div>
-            <Button onClick={() => window.location.reload()}>Retry</Button>
+            <Button className="bg-[#1f6feb] hover:bg-[#1a56c4] text-white" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </Card>
         </div>
       </div>
@@ -116,23 +119,27 @@ export function MFA() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <Card className="p-6 mb-6">
-          <div className="flex justify-between items-start mb-4">
+    <div className="page-shell">
+      <div className="max-w-2xl mx-auto space-y-8">
+        <Card className="p-8 sm:p-10 fade-up">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Multi-Factor Authentication</h1>
-              <p className="text-gray-600">
-                Manage your two-factor authentication settings
+              <span className="page-kicker text-xs text-[#6b5a46]">Security</span>
+              <h1 className="text-3xl font-semibold mt-2">Multi-Factor Authentication</h1>
+              <p className="text-gray-600 mt-2">
+                Manage your two-factor authentication settings.
               </p>
             </div>
-            <Button onClick={() => navigate('/todos')}>
+            <Button
+              className="bg-[#1f6feb] hover:bg-[#1a56c4] text-white"
+              onClick={() => navigate('/todos')}
+            >
               Back to Todos
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-8 sm:p-10 fade-up">
           {hasMfaNodes ? (
             <OryForm
               flow={mfaFlow}

@@ -1,5 +1,5 @@
 import { TodoItem } from './TodoItem';
-import { Card } from 'pixel-retroui';
+import { Card } from './ui/Card';
 import type { Todo } from '../types/todo';
 import type { ApiError } from '../services/api';
 
@@ -16,9 +16,9 @@ export function TodoList({ todos, loading, error, onToggle, onDelete }: TodoList
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-lg">Loading todos...</p>
-      </div>
+      <Card className="p-8 text-center">
+        <p className="text-lg text-gray-700">Loading your list...</p>
+      </Card>
     );
   }
 
@@ -39,13 +39,16 @@ export function TodoList({ todos, loading, error, onToggle, onDelete }: TodoList
         : isNetworkError
           ? 'Unable to connect to the server. Please make sure the backend is running on http://localhost:8787'
           : error.message;
+    const errorClasses = is401 || is403
+      ? 'bg-[#b42318] text-white'
+      : 'bg-[#ffe77a] text-black';
     return (
-      <Card className="p-6 mb-4" bg={is401 || is403 ? 'red' : 'yellow'} textColor={is401 || is403 ? 'white' : 'black'}>
+      <Card className={`p-6 mb-4 ${errorClasses}`}>
         <div className="space-y-2">
           <h3 className="font-bold text-lg">{title}</h3>
           <p>{message}</p>
           {isNetworkError && !is401 && !is403 && (
-            <p className="text-sm mt-2">
+            <p className="text-sm mt-10">
               The app is running in fallback mode. Todos will not be saved until
               the server is available.
             </p>
@@ -61,9 +64,10 @@ export function TodoList({ todos, loading, error, onToggle, onDelete }: TodoList
       : 'No todos yet. Add one above!';
     
     return (
-      <Card className="p-8 text-center  ">
-        <p className="text-lg text-gray-600">
-          {emptyMessage}
+      <Card className="p-10 text-center border-dashed">
+        <p className="text-lg text-gray-600">{emptyMessage}</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Capture a small, clear task and build momentum.
         </p>
       </Card>
     );

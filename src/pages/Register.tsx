@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { Card } from 'pixel-retroui';
+import { Card } from '../components/ui/Card';
 import { OryForm } from '../components/OryForm';
 import * as ory from '../services/ory';
 import type { OryFlow } from '../services/ory';
@@ -69,9 +69,9 @@ export function Register() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-        <Card className="p-6 w-1/2 max-w-md">
-          <p className="text-center">Loading registration form...</p>
+      <div className="page-shell flex items-start sm:items-center justify-center">
+        <Card className="p-6 w-full max-w-md">
+          <p className="text-center text-gray-700">Loading registration form...</p>
         </Card>
       </div>
     );
@@ -79,15 +79,15 @@ export function Register() {
 
   if (error && !flow) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
+      <div className="page-shell flex items-start sm:items-center justify-center">
         <Card className="p-6 w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-2">Register</h1>
+          <h1 className="text-3xl font-semibold mb-2">Register</h1>
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="w-full px-4 py-2 bg-[#1f6feb] text-white rounded hover:bg-[#1a56c4]"
           >
             Retry
           </button>
@@ -109,27 +109,27 @@ const isMultiStep =
 
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-8 px-4">
-      <Card className="p-6 w-1/2">
-        <h1 className="text-3xl font-bold mb-2">Register</h1>
-        <p className="text-gray-600 mb-6">
+    <div className="page-shell flex items-start sm:items-center justify-center">
+      <Card className="p-9 sm:p-11 w-full max-w-lg fade-up">
+        <span className="page-kicker text-xs text-[#6b5a46]">Create account</span>
+        <h1 className="text-3xl font-semibold mt-2">Register</h1>
+        <p className="text-gray-600 mb-7">
           {isMultiStep && !flow?.ui.nodes.some(n => n.attributes.type === 'password')
             ? 'Enter your email to continue'
-            : 'Create a new account'}
+            : 'Set up your account in a few quick steps.'}
         </p>
 
         <OryForm
           flow={flow}
           onSubmit={handleFlowSubmit}
           onError={handleFlowError}
-          showPasswordToggles
           requirePasswordConfirmation
           requirePasswordStrength
         />
 
         <div className="mt-6 text-center text-sm">
           <span className="text-gray-600">Already have an account? </span>
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-[#1f6feb] hover:underline">
             Login
           </Link>
         </div>

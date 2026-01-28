@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Card } from 'pixel-retroui';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 import type { Todo } from '../types/todo';
 
 interface TodoItemProps {
@@ -31,29 +32,30 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
   };
 
   return (
-    <Card className="mb-3">
-      <div className="flex items-center gap-4 p-4">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={handleToggle}
-          disabled={isToggling || isDeleting}
-          className="w-5 h-5 cursor-pointer"
-        />
-        <span
-          className={`flex-1 truncate ${
-            todo.completed
-              ? 'line-through text-gray-500'
-              : 'text-gray-900'
-          }`}
-        >
-          {todo.title}
-        </span>
+    <Card className="mb-3 no-shadow">
+      <div className="flex items-center gap-3 p-4">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={todo.completed}
+            onChange={handleToggle}
+            disabled={isToggling || isDeleting}
+            className="w-5 h-5 cursor-pointer accent-[#1f6feb]"
+          />
+          <span
+            className={`flex-1 truncate text-sm sm:text-base ${
+              todo.completed
+                ? 'line-through text-gray-500'
+                : 'text-gray-900'
+            }`}
+          >
+            {todo.title}
+          </span>
+        </div>
         <Button
           onClick={handleDelete}
           disabled={isToggling || isDeleting}
-          bg="red"
-          textColor="white"
+          className="shrink-0 no-shadow bg-[#aC0101] hover:bg-[#b91c1c] text-white"
         >
           {isDeleting ? 'Deleting...' : 'Delete'}
         </Button>

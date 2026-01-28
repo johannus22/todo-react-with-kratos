@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Card, Button } from 'pixel-retroui';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminTodoList } from '../components/AdminTodoList';
 import { useAdminTodos } from '../hooks/useAdminTodos';
@@ -21,37 +22,41 @@ export function Dashboard() {
   const userEmail = user?.traits?.email || user?.verifiable_addresses?.[0]?.value || 'User';
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <Card className="p-6 mb-6">
-          <div className="flex justify-between items-start mb-4">
+    <div className="page-shell">
+      <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-8 lg:space-y-10">
+        <Card className="p-8 padding-have fade-up">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-              <p className="text-gray-600">
-                Welcome back, <span className="font-semibold">{userEmail}</span>!
+              <span className="page-kicker text-xs text-[#6b5a46]">Overview</span>
+              <h1 className="text-3xl sm:text-4xl font-semibold mt-2">Dashboard</h1>
+              <p className="text-gray-600 mt-2">
+                Welcome back, <span className="font-semibold">{userEmail}</span>.
               </p>
             </div>
-            <Button onClick={handleLogout} bg="red" textColor="white">
+            <Button
+              onClick={handleLogout}
+              className="bg-[#ff8fab] hover:bg-[#ff6f92] text-black"
+            >
               Logout
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 mb-6">
+        <Card className="p-8 sm:p-10 lg:p-12 fade-up">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Link to="/todos">
-              <Button className="w-full sm:w-40" bg="blue" textColor="white">
+              <Button className="w-full bg-[#1f6feb] hover:bg-[#1a56c4] text-white">
                 Go to Todos
               </Button>
             </Link>
             <Link to="/mfa">
-              <Button className="w-full sm:w-40" bg="yellow" textColor="black">
+              <Button className="w-full bg-[#ffe77a] hover:bg-[#ffd94f] text-black">
                 Manage MFA
               </Button>
             </Link>
             <Link to="/settings">
-              <Button className="w-full sm:w-40" bg="gray" textColor="white">
+              <Button className="w-full bg-[#111827] hover:bg-[#0b1120] text-white">
                 Account Settings
               </Button>
             </Link>
@@ -59,13 +64,16 @@ export function Dashboard() {
         </Card>
 
         {isAdmin && (
-          <Card className="p-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <Card className="p-8 sm:p-10 lg:p-12 fade-up">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold">Admin: All Todos</h2>
                 <p className="text-sm text-gray-600">View and delete todos across all accounts.</p>
               </div>
-              <Button onClick={refetchAdminTodos} bg="blue" textColor="white">
+              <Button
+                onClick={refetchAdminTodos}
+                className="bg-[#1f6feb] hover:bg-[#1a56c4] text-white"
+              >
                 Refresh
               </Button>
             </div>

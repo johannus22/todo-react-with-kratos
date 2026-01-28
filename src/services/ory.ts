@@ -169,6 +169,37 @@ async function oryFetch(
   return response;
 }
 
+function collectOryMessages(data: any): OryMessage[] {
+  const messages: OryMessage[] = [];
+
+  if (Array.isArray(data?.ui?.messages)) {
+    messages.push(...data.ui.messages);
+  }
+
+  if (Array.isArray(data?.ui?.nodes)) {
+    for (const node of data.ui.nodes) {
+      if (Array.isArray(node?.messages)) {
+        messages.push(...node.messages);
+      }
+    }
+  }
+
+  return messages;
+}
+
+function getOryErrorMessage(data: any, fallback = 'Ory error'): string {
+  const messages = collectOryMessages(data);
+  const errorMessage = messages.find((msg) => msg.type === 'error')?.text;
+  if (errorMessage) return errorMessage;
+
+  return (
+    data?.error?.message ||
+    data?.error?.reason ||
+    data?.message ||
+    fallback
+  );
+}
+
 /**
  * Fetch a flow from Ory Kratos
  * @param flowType - Type of flow: 'login', 'registration', 'settings', 'logout'
@@ -271,11 +302,19 @@ export async function submitFlow(action: string, body: any, method: string) {
       return data;
     }
 
-    throw new Error(
-      data?.ui?.messages?.[0]?.text ||
-      data?.error?.message ||
-      "Ory error"
-    );
+    if (data?.ui?.action) {
+      data.ui.action = normalizeUrl(data.ui.action);
+    }
+
+    if (data?.request_url) {
+      data.request_url = normalizeUrl(data.request_url);
+    }
+
+    if (data?.ui?.nodes || data?.ui?.messages) {
+      return data;
+    }
+
+    throw new Error(getOryErrorMessage(data));
   }
 
   return data;

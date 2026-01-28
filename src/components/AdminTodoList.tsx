@@ -1,4 +1,5 @@
-import { Button, Card } from 'pixel-retroui';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 import type { Todo } from '../types/todo';
 import type { ApiError } from '../services/api';
 
@@ -31,9 +32,9 @@ function getCreatedAt(todo: Todo): string | null {
 export function AdminTodoList({ todos, loading, error, onDelete }: AdminTodoListProps) {
   if (loading) {
     return (
-      <div className="text-center py-6">
-        <p className="text-lg">Loading all todos...</p>
-      </div>
+      <Card className="p-7 text-center">
+        <p className="text-lg text-gray-700">Loading all todos...</p>
+      </Card>
     );
   }
 
@@ -45,8 +46,11 @@ export function AdminTodoList({ todos, loading, error, onDelete }: AdminTodoList
       : is403
         ? 'Admin access required'
         : 'Error';
+    const errorClasses = is401 || is403
+      ? 'bg-[#b42318] text-white'
+      : 'bg-[#ffe77a] text-black';
     return (
-      <Card className="p-4" bg={is401 || is403 ? 'red' : 'yellow'} textColor={is401 || is403 ? 'white' : 'black'}>
+      <Card className={`p-4 ${errorClasses}`}>
         <div className="space-y-2">
           <h3 className="font-bold text-lg">{title}</h3>
           <p>{error.message}</p>
@@ -57,7 +61,7 @@ export function AdminTodoList({ todos, loading, error, onDelete }: AdminTodoList
 
   if (todos.length === 0) {
     return (
-      <Card className="p-6 text-center">
+      <Card className="p-7 text-center">
         <p className="text-lg text-gray-600">No todos found across accounts.</p>
       </Card>
     );
@@ -66,8 +70,8 @@ export function AdminTodoList({ todos, loading, error, onDelete }: AdminTodoList
   return (
     <div className="space-y-3">
       {todos.map((todo) => (
-        <Card key={todo.id} className="p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Card key={todo.id} className="p-5 no-shadow">
+          <div className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={`truncate ${todo.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
@@ -84,8 +88,7 @@ export function AdminTodoList({ todos, loading, error, onDelete }: AdminTodoList
             </div>
             <Button
               onClick={() => onDelete(todo.id)}
-              bg="red"
-              textColor="white"
+              className="shrink-0 bg-[#dc2626] hover:bg-[#b91c1c] text-white"
             >
               Delete
             </Button>

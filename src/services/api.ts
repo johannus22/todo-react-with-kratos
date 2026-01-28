@@ -1,6 +1,6 @@
 import type { Todo } from '../types/todo';
 
-const API_BASE_URL = 'http://localhost:8787';
+const API_BASE_URL = 'http://localhost:4455';
 
 export interface ApiError {
   message: string;
@@ -49,19 +49,16 @@ function getMessageFromBody(
 type ApiOptions = RequestInit & { userId?: string | null };
 
 /**
- * Generic API helper: cookie support, JSON headers, X-User-Id when userId is provided.
+ * Generic API helper: cookie support, JSON headers.
  */
 async function api(endpoint: string, options: ApiOptions = {}): Promise<Response> {
-  const { userId, ...fetchInit } = options;
+  const { userId: _userId, ...fetchInit } = options;
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(fetchInit.headers as Record<string, string>),
   };
-  if (userId) {
-    (headers as Record<string, string>)['X-User-Id'] = userId;
-  }
 
   return fetch(url, {
     ...fetchInit,
@@ -71,7 +68,7 @@ async function api(endpoint: string, options: ApiOptions = {}): Promise<Response
 }
 
 /**
- * Fetches all todos from the API. Sends X-User-Id when userId is provided.
+ * Fetches all todos from the API.
  */
 export async function getTodos(userId: string | null): Promise<Todo[]> {
   try {
@@ -88,7 +85,7 @@ export async function getTodos(userId: string | null): Promise<Todo[]> {
 }
 
 /**
- * Creates a new todo. Sends X-User-Id when userId is provided.
+ * Creates a new todo.
  */
 export async function createTodo(title: string, userId: string | null): Promise<Todo> {
   try {
@@ -109,7 +106,7 @@ export async function createTodo(title: string, userId: string | null): Promise<
 }
 
 /**
- * Updates an existing todo. Sends X-User-Id when userId is provided.
+ * Updates an existing todo.
  */
 export async function updateTodo(id: string | number, updates: Partial<Todo>, userId: string | null): Promise<Todo> {
   try {
@@ -130,7 +127,7 @@ export async function updateTodo(id: string | number, updates: Partial<Todo>, us
 }
 
 /**
- * Deletes a todo. Sends X-User-Id when userId is provided.
+ * Deletes a todo.
  */
 export async function deleteTodo(id: string | number, userId: string | null): Promise<void> {
   try {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import type { FormEvent } from 'react';
-import { Button, Input } from 'pixel-retroui';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
 import type { OryFlow, UINode, OryMessage } from '../services/ory';
 import * as ory from '../services/ory';
 
@@ -9,7 +10,6 @@ interface OryFormProps {
   onSubmit?: (flow: OryFlow) => void;
   onError?: (error: Error) => void;
   loading?: boolean;
-  showPasswordToggles?: boolean;
   requirePasswordConfirmation?: boolean;
   requirePasswordStrength?: boolean;
   singleSubmit?: boolean;
@@ -20,7 +20,6 @@ export function OryForm({
   onSubmit,
   onError,
   loading: externalLoading,
-  showPasswordToggles = false,
   requirePasswordConfirmation = false,
   requirePasswordStrength = false,
   singleSubmit = false,
@@ -28,7 +27,6 @@ export function OryForm({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [passwordVisibility, setPasswordVisibility] = useState<Record<string, boolean>>({});
   const nodes = useMemo(() => flow?.ui?.nodes ?? [], [flow]);
   const nodesWithIndex = useMemo(
     () => nodes.map((node, index) => ({ node, index })),
@@ -89,11 +87,12 @@ export function OryForm({
     );
     return passwordNode?.attributes.name ?? '';
   }, [nodes]);
+  const hasPasswordNode = useMemo(
+    () => nodes.some((node) => node.type === 'input' && node.attributes.type === 'password'),
+    [nodes]
+  );
+  const isRecoveryFlow = flow?.type === 'recovery';
   const confirmPasswordFieldName = 'confirm_password';
-
-  const isStrongPassword = (value: string) =>
-    /[A-Za-z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
-
 
   // Initialize form data from flow nodes
 useEffect(() => {
@@ -127,23 +126,6 @@ useEffect(() => {
       });
     }
 
-    if (requirePasswordStrength && name === passwordFieldName) {
-      if (!value) {
-        setErrors((prev) => {
-          const next = { ...prev };
-          delete next[name];
-          return next;
-        });
-        return;
-      }
-
-      if (!isStrongPassword(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: 'Password must include a letter, number, and symbol.',
-        }));
-      }
-    }
   };
 
  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -152,16 +134,6 @@ useEffect(() => {
   setErrors({});
 
   try {
-    if (requirePasswordStrength && passwordFieldName) {
-      const passwordValue = formData[passwordFieldName] || '';
-
-      if (passwordValue && !isStrongPassword(passwordValue)) {
-        setErrors({ [passwordFieldName]: 'Password must include a letter, number, and symbol.' });
-        setLoading(false);
-        return;
-      }
-    }
-
     if (requirePasswordConfirmation && passwordFieldName) {
       const passwordValue = formData[passwordFieldName] || '';
       const confirmValue = formData[confirmPasswordFieldName] || '';
@@ -251,7 +223,7 @@ useEffect(() => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`p-3 rounded ${
+            className={`p-3 rounded-lg text-sm ${
               msg.type === 'error'
                 ? 'bg-red-100 border border-red-400 text-red-700'
                 : msg.type === 'success'
@@ -289,56 +261,22 @@ useEffect(() => {
       required?: boolean,
       nodeMessages?: OryMessage[]
     ) => {
-      const isVisible = passwordVisibility[fieldName] || false;
-
       return (
-        <div key={fieldName} className="mb-4">
-          <label htmlFor={fieldName} className="block text-sm font-medium mb-1">
+        <div key={fieldName} className="mb-5">
+          <label htmlFor={fieldName} className="block text-sm font-medium margin-small mb-2">
             {labelText}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
-          <div className="relative">
-            <Input
-              id={fieldName}
-              type={isVisible ? 'text' : 'password'}
-              name={fieldName}
-              value={value}
-              onChange={(e) => handleInputChange(fieldName, e.target.value)}
-              disabled={isSubmitting}
-              required={required}
-              className={`w-full mx-auto${showPasswordToggles ? ' pr-10' : ''}`}
-            />
-            {showPasswordToggles && (
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
-                aria-label={isVisible ? 'Hide password' : 'Show password'}
-                onClick={() =>
-                  setPasswordVisibility((prev) => ({ ...prev, [fieldName]: !isVisible }))
-                }
-              >
-                {isVisible ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path d="M12 4.5c-5 0-9.27 3.11-11 7.5 1.09 2.67 3.09 4.83 5.5 6.12l-1.5 1.5 1.41 1.41 16.97-16.97-1.41-1.41-2.28 2.28A11.75 11.75 0 0 0 12 4.5Zm-5.4 11.28A9.42 9.42 0 0 1 3.13 12c1.4-3.12 4.7-5.25 8.87-5.25 1.33 0 2.59.22 3.75.62l-2.07 2.07a4 4 0 0 0-5.07 5.07l-2.01 2.2Zm5.4 2.97c-.86 0-1.67-.14-2.44-.39l1.75-1.75a2.5 2.5 0 0 0 3.44-3.44l1.75-1.75c.25.77.39 1.58.39 2.44 0 2.49-2.02 4.5-4.5 4.5Z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path d="M12 5c-5 0-9.27 3.11-11 7.5C2.73 16.89 7 20 12 20s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5Zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
-                  </svg>
-                )}
-              </button>
-            )}
-          </div>
+          <Input
+            id={fieldName}
+            type="password"
+            name={fieldName}
+            value={value}
+            onChange={(e) => handleInputChange(fieldName, e.target.value)}
+            disabled={isSubmitting}
+            required={required}
+            className="w-full mx-auto"
+          />
           {errors[fieldName] && (
             <p className="mt-1 text-sm text-red-600">{errors[fieldName]}</p>
           )}
@@ -366,11 +304,6 @@ useEffect(() => {
         return (
           <Fragment key={`${fieldName}-password-group`}>
             {renderPasswordInput(fieldName, label, fieldValue, attributes.required, node.messages)}
-            {requirePasswordStrength && fieldName === passwordFieldName && (
-              <p className="mt-1 text-xs text-gray-600">
-                Must include at least one letter, one number, and one symbol.
-              </p>
-            )}
             {requirePasswordConfirmation &&
               fieldName === passwordFieldName &&
               renderPasswordInput(
@@ -384,8 +317,8 @@ useEffect(() => {
       }
 
       return (
-        <div key={attributes.name} className="mb-4">
-          <label htmlFor={attributes.name} className="block text-sm font-medium mb-1">
+        <div key={attributes.name} className="mb-5">
+          <label htmlFor={attributes.name} className="block text-sm font-medium margin-small mb-2">
             {label}
             {attributes.required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -408,7 +341,7 @@ useEffect(() => {
             placeholder={attributes.title}
             autoComplete={attributes.autocomplete}
             pattern={attributes.pattern}
-            className="w-full mx-auto"
+            className="w-full mx-auto margin-small"
           />
           {fieldError && (
             <p className="mt-1 text-sm text-red-600">{fieldError}</p>
@@ -432,12 +365,13 @@ useEffect(() => {
       const fieldValue = formData[fieldName] || '';
       const fieldError = errors[fieldName];
       const label = attributes.label?.text || node.meta?.label?.text || 'Verification Code';
+      const isRequired = Boolean(attributes.required) && !(isRecoveryFlow && hasPasswordNode);
 
       return (
-        <div key={attributes.name} className="mb-4">
-          <label htmlFor={attributes.name} className="block text-sm font-medium mb-1">
+        <div key={attributes.name} className="mb-5">
+          <label htmlFor={attributes.name} className="block text-sm font-medium margin-small mb-2">
             {label}
-            {attributes.required && <span className="text-red-500 ml-1">*</span>}
+            {isRequired && <span className="text-red-500 ml-1">*</span>}
           </label>
           <Input
             id={attributes.name}
@@ -446,10 +380,10 @@ useEffect(() => {
             value={fieldValue}
             onChange={(e) => handleInputChange(fieldName, e.target.value)}
             disabled={isSubmitting || attributes.disabled}
-            required={attributes.required}
+            required={isRequired}
             placeholder="Enter code"
             pattern={attributes.pattern}
-            className="w-full"
+            className="w-full margin-small"
             maxLength={6}
           />
           {fieldError && (
@@ -478,7 +412,7 @@ useEffect(() => {
           value={buttonValue}
           data-method={buttonValue}
           disabled={isSubmitting}
-          className="w-full mx-auto"
+          className="w-full mx-auto no-shadow margin-small padding-small bg-[#1f6feb] hover:bg-[#1a56c4] text-white"
         >
           {isSubmitting ? 'Processing...' : label}
         </Button>
@@ -529,7 +463,7 @@ useEffect(() => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {renderMessages()}
       
       {/* Render hidden inputs first */}
